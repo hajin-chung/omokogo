@@ -11,18 +11,18 @@ type CreateUserRequest struct {
 }
 
 func CreateUserController(c *fiber.Ctx) error {
-	data := CreateUserRequest{}	
+	data := CreateUserRequest{}
 	err := json.Unmarshal(c.Body(), &data)
 	if err != nil {
 		return err
 	}
-	
-	newUser := User {
-		Id: CreateId(),
-		Name: data.Name,
-		Score: 0.0,
-		Status: UserStatusIdle,
-		GameId: "",
+
+	newUser := User{
+		Id:      CreateId(),
+		Name:    data.Name,
+		Score:   0.0,
+		Status:  UserStatusIdle,
+		GameId:  "",
 		Sockets: nil,
 	}
 	NewUser(&newUser)
