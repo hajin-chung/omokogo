@@ -2,6 +2,26 @@
 
 online gomoku 
 
+## user senarios
+
+1. auth (db)
+    - create account
+    - login, logout
+3. queue
+    - user enqueue: push user(Id, Score) to queue
+    - match made: match maker
+    - create game: db
+2. game
+    - connects to game
+        - handle connection
+        - handle disconnection
+    - handle messages: messageHandler
+        1. places stone
+            - handle auth (check if player's turn to place)
+            - check if stone location is allowed
+            - broadcast game state if board changed
+            - handle win, lose, draw
+
 ## data structure
 
 ```

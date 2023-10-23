@@ -3,9 +3,10 @@ package main
 import (
 	"errors"
 	"log"
-	"omokogo/utils"
 	"omokogo/controllers"
+	"omokogo/utils"
 
+	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 )
@@ -20,6 +21,7 @@ func main() {
 	app.Use("/", logger.New())
 	app.Static("/", "./public")
 	app.Use("/ws/*", controllers.UpgradeWebsocket)
+	app.Get("/ws/game/:id", websocket.New(controllers.GameConnect))
 
 	err := app.Listen(":3000")
 	if err != nil {
