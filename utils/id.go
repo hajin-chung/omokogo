@@ -1,4 +1,4 @@
-package main
+package utils
 
 import "github.com/nlepage/go-cuid2"
 

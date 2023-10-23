@@ -2,7 +2,7 @@
 
 online gomoku 
 
-## structure
+## data structure
 
 ```
 there are games 
