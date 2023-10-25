@@ -33,7 +33,7 @@ Input Message Formats
 	PLACE y x
 
 Output Message Formats
-1. error 
+1. error
 	ERROR message
 */
 
@@ -62,7 +62,7 @@ func handleMessage(c *websocket.Conn, userId string, gameId string, errorChannel
 
 		message = string(msg[:])
 		log.Printf("RECV %s : %s\n", userId, message)
-	
+
 		switch {
 		// maybe store "PLACE" in some constant
 		case strings.HasPrefix(message, "PLACE"):
@@ -74,7 +74,7 @@ func handleMessage(c *websocket.Conn, userId string, gameId string, errorChannel
 			}
 
 			// err = giwon.Place(gameId, userId, y, x)
-			// if err != nil {  }
+			// if err != nil { _ = c.WriteMessage(websocket.TextMessage, []byte(err.error())) }
 		}
 	}
 }
