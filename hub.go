@@ -1,4 +1,4 @@
-package hub
+package main
 
 import (
 	"fmt"
@@ -25,7 +25,7 @@ type Hub struct {
 	command chan Command
 }
 
-func Init() *Hub {
+func InitHub() *Hub {
 	hub := Hub{
 		clients: make(map[string]map[*websocket.Conn]bool),
 		command: make(chan Command),

@@ -1,21 +1,24 @@
-package controllers
+package main
 
 import (
 	"encoding/json"
-	"omokogo/globals"
-	"omokogo/models"
-	"omokogo/queries"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func LoginController(c *fiber.Ctx) error {
-	sess, _ := globals.Store.Get(c)
+func IndexController(c *fiber.Ctx) error {
+	return c.Render("pages/index", fiber.Map{
+		"Title": "hi",
+	}, "layout")
+}
 
-	body := models.LoginReq{}
+func LoginController(c *fiber.Ctx) error {
+	sess, _ := Store.Get(c)
+
+	body := LoginReq{}
 	_ = json.Unmarshal(c.Body(), &body)
 
-	user, err := queries.LoginUser(body)
+	user, err := LoginUser(body)
 	if err != nil {
 		return c.Status(400).JSON(
 			fiber.Map{"error": true, "message": "wrong username or wrong password"})
@@ -34,24 +37,24 @@ func LoginViewController(c *fiber.Ctx) error {
 }
 
 func RegisterController(c *fiber.Ctx) error {
-	sess, _ := globals.Store.Get(c)
+	sess, _ := Store.Get(c)
 
-	body := models.RegisterReq{}
+	body := RegisterReq{}
 	_ = json.Unmarshal(c.Body(), &body)
 
-	nameExists := queries.CheckUserName(body.Name)
+	nameExists := CheckUserName(body.Name)
 	if nameExists {
 		return c.Status(400).JSON(
 			fiber.Map{"error": true, "message": "username exists"})
 	}
 
-	emailExists := queries.CheckUserEmail(body.Email)
+	emailExists := CheckUserEmail(body.Email)
 	if emailExists {
 		return c.Status(400).JSON(
 			fiber.Map{"error": true, "message": "email exists"})
 	}
 
-	user, err := queries.CreateUser(body)
+	user, err := CreateUser(body)
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": true, "message": err.Error()})
 	}
@@ -67,3 +70,24 @@ func RegisterViewController(c *fiber.Ctx) error {
 		"Title": "register",
 	}, "layout")
 }
+
+func MeController(c *fiber.Ctx) error {
+	sess, _ := Store.Get(c)
+	id, ok := sess.Get("id").(string)
+	if ok != true {
+		return c.Status(400).SendString("login please")
+	}
+	return c.SendString(id)
+}
+
+func TestController(c *fiber.Ctx) error {
+	sess, _ := Store.Get(c)
+	_, ok := sess.Get("id").(string)
+	if ok != true {
+		return c.Status(400).SendString("login please")
+	}
+	return c.Render("pages/test", fiber.Map{
+		"Title": "register",
+	}, "layout")
+}
+

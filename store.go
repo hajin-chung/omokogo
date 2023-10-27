@@ -1,4 +1,4 @@
-package globals
+package main
 
 import "github.com/gofiber/fiber/v2/middleware/session"
 

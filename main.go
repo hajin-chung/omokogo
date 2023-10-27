@@ -3,11 +3,6 @@ package main
 import (
 	"errors"
 	"log"
-	"omokogo/controllers"
-	"omokogo/globals"
-	"omokogo/hub"
-	"omokogo/queries"
-	"omokogo/utils"
 
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
@@ -18,20 +13,20 @@ import (
 func main() {
 	var err error
 
-	err = utils.InitId()
+	err = InitId()
 	if err != nil {
 		panic(err)
 	}
-	globals.InitStore()
-	err = globals.LoadEnv()
+	InitStore()
+	err = LoadEnv()
 	if err != nil {
 		panic(err)
 	}
-	err = queries.InitDB()
+	err = InitDB()
 	if err != nil {
 		panic(err)
 	}
-	hub := hub.Init()
+	hub := InitHub()
 
 	engine := html.New("./views", ".tmpl")
 	app := fiber.New(fiber.Config{
@@ -46,18 +41,18 @@ func main() {
 
 	app.Use("/", logger.New())
 	app.Static("/", "./public")
-	app.Get("/", controllers.IndexController)
-	app.Get("/login", controllers.LoginViewController)
-	app.Post("/login", controllers.LoginController)
-	app.Get("/register", controllers.RegisterViewController)
-	app.Post("/register", controllers.RegisterController)
-	app.Get("/me", controllers.MeController)
-	app.Get("/test", controllers.TestController)
-	app.Use("/ws", controllers.UpgradeWebsocket)
+	app.Get("/", IndexController)
+	app.Get("/login", LoginViewController)
+	app.Post("/login", LoginController)
+	app.Get("/register", RegisterViewController)
+	app.Post("/register", RegisterController)
+	app.Get("/me", MeController)
+	app.Get("/test", TestController)
+	app.Use("/ws", UpgradeWebsocket)
 	app.Get(
 		"/ws",
-		controllers.WebsocketController,
-		websocket.New(controllers.HandleWebsocket),
+		WebsocketController,
+		websocket.New(HandleWebsocket),
 	)
 
 	err = app.Listen(":3000")

@@ -1,11 +1,8 @@
-package controllers
+package main
 
 import (
-	"omokogo/globals"
-	"omokogo/hub"
-
-	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/contrib/websocket"
 )
 
 func UpgradeWebsocket(c *fiber.Ctx) error {
@@ -17,7 +14,7 @@ func UpgradeWebsocket(c *fiber.Ctx) error {
 }
 
 func WebsocketController(c *fiber.Ctx) error {
-	sess, _ := globals.Store.Get(c)
+	sess, _ := Store.Get(c)
 	userId, ok := sess.Get("id").(string)
 	if !ok {
 		return c.Status(403).JSON(
@@ -33,6 +30,6 @@ func HandleWebsocket(c *websocket.Conn) {
 	if !ok {
 		return
 	}
-	hub := c.Locals("hub").(*hub.Hub)
+	hub := c.Locals("hub").(*Hub)
 	hub.Add(userId, c)
 }

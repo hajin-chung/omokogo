@@ -1,6 +1,18 @@
-package utils
+package main
 
-import "github.com/nlepage/go-cuid2"
+import (
+	"crypto/sha256"
+	"github.com/nlepage/go-cuid2"
+)
+
+func Hash(raw string) string {
+	h := sha256.New()
+
+	h.Write([]byte(raw))
+	bs := h.Sum(nil)
+
+	return string(bs[:])
+}
 
 var idFunction func() (string, error)
 

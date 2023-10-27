@@ -1,4 +1,4 @@
-package globals
+package main
 
 import (
 	"log"
