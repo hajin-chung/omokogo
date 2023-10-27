@@ -5,6 +5,7 @@ import (
 	"log"
 	"omokogo/controllers"
 	"omokogo/globals"
+	"omokogo/hub"
 	"omokogo/queries"
 	"omokogo/utils"
 
@@ -30,11 +31,17 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	hub := hub.Init()
 
 	engine := html.New("./views", ".tmpl")
 	app := fiber.New(fiber.Config{
 		Views:        engine,
 		ErrorHandler: ErrorHandler,
+	})
+
+	app.Use(func(c *fiber.Ctx) error {
+		c.Locals("hub", hub)
+		return c.Next()
 	})
 
 	app.Use("/", logger.New())

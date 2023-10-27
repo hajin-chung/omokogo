@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"log"
 	"omokogo/globals"
+	"omokogo/hub"
 
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
@@ -29,20 +29,10 @@ func WebsocketController(c *fiber.Ctx) error {
 }
 
 func HandleWebsocket(c *websocket.Conn) {
-	var (
-		mt      int
-		msg     []byte
-		message string
-		err     error
-	)
-
-	for {
-		mt, msg, err = c.ReadMessage()
-		if err != nil {
-			continue
-		}
-		message = string(msg[:])
-		log.Printf("<<< %d: %s\n", mt, message)
-		c.WriteMessage(websocket.TextMessage, msg)
+	userId, ok := c.Locals("userId").(string)
+	if !ok {
+		return
 	}
+	hub := c.Locals("hub").(*hub.Hub)
+	hub.Add(userId, c)
 }
