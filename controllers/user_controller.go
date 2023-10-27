@@ -14,3 +14,14 @@ func MeController(c *fiber.Ctx) error {
 	}
 	return c.SendString(id)
 }
+
+func TestController(c *fiber.Ctx) error {
+	sess, _ := globals.Store.Get(c)
+	_, ok := sess.Get("id").(string)
+	if ok != true {
+		return c.Status(400).SendString("login please")
+	}
+	return c.Render("pages/test", fiber.Map{
+		"Title": "register",
+	}, "layout")
+}

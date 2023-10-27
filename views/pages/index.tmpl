@@ -1,1 +1,32 @@
-hi
+<button id="queue">queue</button>
+<pre id="log"></pre>
+
+<script>
+  const queueButton = document.getElementById("queue")
+  const log = document.getElementById("log")
+
+  queueButton.addEventListener("click", () => {
+    const loc = window.location.host;
+    const socket = new WebSocket(`ws://${loc}/ws`)
+
+    socket.addEventListener("open", (evt) => {
+      log.innerHTML += "socket opened\n"
+      console.log(evt)
+    })
+
+    socket.addEventListener("message", (evt) => {
+      log.innerHTML += `<<< ${evt.data}\n`
+      console.log(evt)
+    })
+
+    socket.addEventListener("error", (evt) => {
+      log.innerHTML += "error\n"
+      console.log(evt)
+    })
+
+    socket.addEventListener("close", (evt) => {
+      log.innerHTML += "socket closed\n"
+      console.log(evt)
+    })
+  })
+</script>

@@ -1,0 +1,45 @@
+<button id="connect">connect</button>
+<input id="cmd"></input>
+<button id="submit">send</button>
+<pre id="output">
+</pre>
+
+<script>
+  const connect = document.getElementById("connect")
+  const cmd = document.getElementById("cmd")
+  const submit = document.getElementById("submit")
+  const output= document.getElementById("output")
+  const loc = window.location.host;
+  const socket = new WebSocket(`ws://${loc}/ws`)
+
+  function writeOutput(msg) {
+    output.innerHTML += `${msg}\n`
+  }
+
+  socket.addEventListener("open", (evt) => {
+    writeOutput("socket open")
+    console.log(evt)
+  })
+
+  socket.addEventListener("error", (evt) => {
+    writeOutput("error")
+    console.log(evt)
+  })
+
+  socket.addEventListener("message", (evt) => {
+    writeOutput(`<<< ${evt.data}`)
+    console.log(evt)
+  })
+
+  socket.addEventListener("close", (evt) => {
+    writeOutput("socket closed")
+    console.log(evt)
+  })
+
+  submit.addEventListener("click", () => {
+    const data = cmd.value;
+    socket.send(data);
+    writeOutput(`>>> ${data}`)
+    cmd.value = "";
+  })
+</script>

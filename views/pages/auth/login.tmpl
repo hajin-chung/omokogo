@@ -1,23 +1,33 @@
-<form id="login_form">
+<form id="login_form" action="javascript:void(0);">
   <label>username</label>
   <input type="text" id="username" />
   <label>password</label>
   <input type="password" id="password" />
   <input type="submit" />
 </form>
+<p id="message"></p>
 <script>
   const form = document.getElementById("login_form")
   const username = document.getElementById("username")
   const password = document.getElementById("password")
+  const message = document.getElementById("message")
 
-  form.addEventListener("submit", (e) => {
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const data = { name: username.value, password: password.value }
+    const body = { name: username.value, password: password.value }
     const res = await fetch("/login", {
       method: "POST",
-      body: JSON.stringify(data),
+      body: JSON.stringify(body),
     })
 
-    console.log(res)
+    if (res.status === 400) {
+      message.innerHTML = "Internal server error!" 
+      return
+    }
+
+    const data = await res.json();
+    if (data.error) message.innerHTML = data.message
+
+    window.location.href = "/"
   })
 </script>

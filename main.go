@@ -45,8 +45,13 @@ func main() {
 	app.Get("/register", controllers.RegisterViewController)
 	app.Post("/register", controllers.RegisterController)
 	app.Get("/me", controllers.MeController)
-	app.Use("/ws/*", controllers.UpgradeWebsocket)
-	app.Get("/ws/game/:id", websocket.New(controllers.GameConnect))
+	app.Get("/test", controllers.TestController)
+	app.Use("/ws", controllers.UpgradeWebsocket)
+	app.Get(
+		"/ws",
+		controllers.WebsocketController,
+		websocket.New(controllers.HandleWebsocket),
+	)
 
 	err = app.Listen(":3000")
 	if err != nil {

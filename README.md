@@ -2,6 +2,22 @@
 
 online gomoku 
 
+## notes
+
+every realtime communications happen through websocket on `/ws`
+
+#### input messages
+
+- ENQ: enqueue
+- DEQ: dequeue, cancel queue
+- PLC y x: place stone on y, x
+
+#### output messages
+
+- MTC gameId: match made on gameId
+- GST nextPlayerId (y1, x1), (y2, x2), ... : game state
+- ERR msg: error messages
+
 ## user senarios
 
 1. auth (db)
