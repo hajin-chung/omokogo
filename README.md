@@ -11,6 +11,8 @@ every realtime communications happen through websocket on `/ws`
 - ENQ: enqueue
 - DEQ: dequeue, cancel queue
 - PLC y x: place stone on y, x
+- STAT: get my state
+- GST gameId: get game stae
 
 #### output messages
 

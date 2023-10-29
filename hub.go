@@ -87,7 +87,7 @@ func (h *Hub) Run() {
 		switch ty {
 		case "ECH":
 			h.Write(c.userId, c.payload)
-		case "STAT":
+		case "CONN":
 			h.Write(c.userId, h.StatMessage(c.userId))
 		default:
 			CommandHandler(h, c.userId, c.payload)
