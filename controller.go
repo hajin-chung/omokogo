@@ -82,12 +82,8 @@ func MeController(c *fiber.Ctx) error {
 
 func TestController(c *fiber.Ctx) error {
 	sess, _ := Store.Get(c)
-	_, ok := sess.Get("id").(string)
-	if ok != true {
-		return c.Status(400).SendString("login please")
-	}
 	return c.Render("pages/test", fiber.Map{
-		"Title": "register",
+		"Title": "Test",
+		"Id":    sess.Get("id"),
 	}, "layout")
 }
-

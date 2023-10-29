@@ -45,7 +45,7 @@ func main() {
 	app.Get("/", IndexController)
 	app.Get("/me", ProtectedRoute, MeController)
 	app.Use("/ws", UpgradeWebsocket)
-	app.Get("/test", ProtectedRoute, TestController)
+	app.Get("/test", TestController)
 	app.Get("/login", LoginViewController)
 	app.Get("/register", RegisterViewController)
 	app.Post("/login", LoginController)

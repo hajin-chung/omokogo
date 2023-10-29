@@ -66,13 +66,13 @@ func (h *Hub) Read(userId string, conn *websocket.Conn) {
 			payload: message,
 		}
 
-		log.Printf("<<< %s: %s\n", c.userId, c.payload)
+		log.Printf(">>> %s: %s\n", c.userId, c.payload)
 		h.command <- c
 	}
 }
 
 func (h *Hub) Write(userId string, payload string) {
-	log.Printf(">>> %s: %s\n", userId, payload)
+	log.Printf("<<< %s: %s\n", userId, payload)
 	for c := range h.clients[userId] {
 		c.WriteMessage(websocket.TextMessage, []byte(payload))
 	}
@@ -83,14 +83,14 @@ func (h *Hub) Run() {
 	for {
 		c := <-h.command
 		fmt.Sscanf(c.payload, "%s", &ty)
+		// handle hub related commands
 		switch ty {
-		case "ENQ":
 		case "ECH":
 			h.Write(c.userId, c.payload)
 		case "STAT":
 			h.Write(c.userId, h.StatMessage(c.userId))
 		default:
-			h.Write(c.userId, "ERR")
+			CommandHandler(h, c.userId, c.payload)
 		}
 	}
 }

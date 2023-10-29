@@ -15,25 +15,25 @@ every realtime communications happen through websocket on `/ws`
 #### output messages
 
 - MTC gameId: match made on gameId
-- GST nextPlayerId (y1, x1), (y2, x2), ... : game state
+- GST gameId userId1 userId2 (y1, x1), (y2, x2), ... : game state
 - ERR msg: error messages
 
-## user senarios
+## Design
 
-1. auth (db)
+1. auth
     - create account
     - login, logout
-3. queue
-    - user enqueue: push user(Id, Score) to queue
-    - match made: match maker
-    - create game: db
-2. game
-    - connects to game
-        - handle connection
-        - handle disconnection
-    - handle messages: messageHandler
+2. hub
+    - handle connection
+    - handle disconnection
+3. core
+    - queue
+        - user enqueue: push user(Id, Score) to queue
+        - match made: match maker
+        - create game
+    - handle commands: commandHandler
         1. places stone
-            - handle auth (check if player's turn to place)
+            - check if player's turn to place
             - check if stone location is allowed
             - broadcast game state if board changed
             - handle win, lose, draw
@@ -41,8 +41,12 @@ every realtime communications happen through websocket on `/ws`
 ## data structure
 
 ```
-there are games 
-games are played by 2 users 1 vs 1
+user (
+    id
+    status (playing, queue, idle)
+    gameId
+)
+
 game (
     id
     userId1
@@ -50,32 +54,4 @@ game (
     stones [](userNum, x, y)
     status (playing, done)
 )
-
-there are users
-users can have mulit websockets
-user (
-    id
-    name
-    score
-    status (playing, idle, queue) 
-    gameId
-    sockets []*websocket.Conn
-)
 ```
-
-## Dev order
-
-- [ ] new user
-- [ ] some rest api stuff
-- [ ] queue
-- [ ] new game
-- [ ] think about websocket handling
-- [ ] handle game logic
-
-## some things to think about
-
-1. database
-
-first, thought about lightweight sqlite but it doesn't support row level locking which is important for write heavy programs like games. but I havent tested yet...
-postgres or mysql sounds heavy I want something light
-never tried redis but by the nature of key value store I think it won't handle structured data well but I guess I'll have to use this? think I have to do some more searching
