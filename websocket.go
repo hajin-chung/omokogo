@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/contrib/websocket"
+	"github.com/gofiber/fiber/v2"
 )
 
 func UpgradeWebsocket(c *fiber.Ctx) error {

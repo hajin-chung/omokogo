@@ -8,7 +8,7 @@ import (
 )
 
 type EnvType struct {
-	DB_URL        string
+	DB_URL string
 }
 
 var Env EnvType
