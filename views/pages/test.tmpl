@@ -1,14 +1,15 @@
-<button id="connect">connect</button>
-<input id="cmd"></input>
-<button id="submit">send</button>
+<form action="javascript:void(0);" id="form">
+  <input id="cmd"></input>
+  <input type="submit" id="submit">send</input>
+</form>
 <pre id="output">
 </pre>
 
 <script>
-  const connect = document.getElementById("connect")
   const cmd = document.getElementById("cmd")
+  const form = document.getElementById("form")
   const submit = document.getElementById("submit")
-  const output= document.getElementById("output")
+  const output = document.getElementById("output")
   const loc = window.location.host;
   const socket = new WebSocket(`ws://${loc}/ws`)
 
@@ -36,7 +37,9 @@
     console.log(evt)
   })
 
-  submit.addEventListener("click", () => {
+  form.addEventListener("submit", (evt) => {
+    evt.preventDefault();
+
     const data = cmd.value;
     socket.send(data);
     writeOutput(`>>> ${data}`)

@@ -59,11 +59,14 @@ func (h *Hub) Read(userId string, conn *websocket.Conn) {
 		if mt != websocket.TextMessage {
 			continue
 		}
+
 		message := string(msg[:])
 		c := Command{
 			userId:  userId,
 			payload: message,
 		}
+
+		log.Printf("<<< %s: %s\n", c.userId, c.payload)
 		h.command <- c
 	}
 }
@@ -79,7 +82,6 @@ func (h *Hub) Run() {
 	var ty string
 	for {
 		c := <-h.command
-		log.Printf("<<< %s: %s\n", c.userId, c.payload)
 		fmt.Sscanf(c.payload, "%s", &ty)
 		switch ty {
 		case "ENQ":
@@ -88,6 +90,7 @@ func (h *Hub) Run() {
 		case "STAT":
 			h.Write(c.userId, h.StatMessage(c.userId))
 		default:
+			h.Write(c.userId, "ERR")
 		}
 	}
 }
