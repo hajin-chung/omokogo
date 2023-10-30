@@ -2,133 +2,80 @@ package main
 
 import (
 	"fmt"
-	"time"
 )
 
-type Status int
-
-const (
-	PlayerIdle    Status = 0
-	PlayerQueue          = 1
-	PlayerPlaying        = 2
-)
-
-const (
-	GamePlaying Status = 0
-	GameDone           = 1
-)
-
-type Player struct {
-	id     string
-	status Status
-	gameId string
-}
-
-func (p *Player) stateMessage() string {
-	return fmt.Sprintf("STAT %s %d %s", p.id, p.status, p.gameId)
-}
-
-type Stone struct {
-	x int
-	y int
-}
-
-type Game struct {
-	id        string
-	playerId1 string
-	playerId2 string
-	stones    []Stone
-	status    Status
+func UserStateMessage(u *User) string {
+	return fmt.Sprintf("STAT %s %d %s", u.Id, u.Status, u.GameId)
 }
 
 // TODO: implement
-func (g *Game) canPlace(playerIdx int, x int, y int) bool {
-	return true
+func CheckGameEnd(stones []Stone) (bool, int) {
+	return false, 0
 }
 
-func (g *Game) stateMessage() string {
+func GameStateMessage(g *Game, stones []Stone) string {
 	var message = ""
-	message += fmt.Sprintf("GST %s %s %s ", g.id, g.playerId1, g.playerId2)
-	for _, stone := range g.stones {
-		message += fmt.Sprintf("(%d, %d) ", stone.x, stone.y)
+	message += fmt.Sprintf("GST %s %s %s ", g.Id, g.UserId1, g.UserId2)
+	for _, stone := range stones {
+		message += fmt.Sprintf("(%d, %d) ", stone.X, stone.Y)
 	}
 	return message
 }
 
-type Giwon struct {
-	players map[string]*Player
-	games   map[string]*Game
-}
-
 // TODO: implement exponential matcher
-func (g *Giwon) matchMaker(hub *Hub) {
-	ticker := time.NewTicker(10 * time.Second)
-	go func() {
-		for {
-			<-ticker.C
-
-			var queue []string
-			for playerId, player := range g.players {
-				if player.status == PlayerQueue {
-					queue = append(queue, playerId)
-				}
-			}
-
-			for len(queue) >= 2 {
-				playerId1 := queue[0]
-				playerId2 := queue[1]
-
-				// create game
-				gameId := CreateId()
-				g.games[gameId] = &Game{
-					id:        gameId,
-					playerId1: playerId1,
-					playerId2: playerId2,
-					status:    GamePlaying,
-				}
-				g.players[playerId1].status = PlayerPlaying
-				g.players[playerId1].gameId = gameId
-				g.players[playerId2].status = PlayerPlaying
-				g.players[playerId2].gameId = gameId
-
-				stateMessage := g.games[gameId].stateMessage()
-				hub.Write(playerId1, stateMessage)
-				hub.Write(playerId2, stateMessage)
-
-				queue = queue[2:]
-			}
-		}
-	}()
-}
-
-var giwon Giwon
-
-// TODO: maybe refactor so that theres no global giwon var?
-func InitGiwon(hub *Hub) error {
-	giwon = Giwon{
-		players: make(map[string]*Player),
-		games:   make(map[string]*Game),
-	}
-	giwon.matchMaker(hub)
-
-	return nil
+func matchMaker(hub *Hub) {
+	// ticker := time.NewTicker(10 * time.Second)
+	// go func() {
+	// 	for {
+	// 		<-ticker.C
+	//
+	// 		var queue []string
+	// 		for playerId, player := range g.players {
+	// 			if player.status == PlayerQueue {
+	// 				queue = append(queue, playerId)
+	// 			}
+	// 		}
+	//
+	// 		for len(queue) >= 2 {
+	// 			playerId1 := queue[0]
+	// 			playerId2 := queue[1]
+	//
+	// 			// create game
+	// 			gameId := CreateId()
+	// 			g.games[gameId] = &Game{
+	// 				id:        gameId,
+	// 				playerId1: playerId1,
+	// 				playerId2: playerId2,
+	// 				status:    GamePlaying,
+	// 			}
+	// 			g.players[playerId1].status = PlayerPlaying
+	// 			g.players[playerId1].gameId = gameId
+	// 			g.players[playerId2].status = PlayerPlaying
+	// 			g.players[playerId2].gameId = gameId
+	//
+	// 			stateMessage := g.games[gameId].stateMessage()
+	// 			hub.Write(playerId1, stateMessage)
+	// 			hub.Write(playerId2, stateMessage)
+	//
+	// 			queue = queue[2:]
+	// 		}
+	// 	}
+	// }()
 }
 
 // handle gomoku commands
 func CommandHandler(hub *Hub, userId string, payload string) {
-	if giwon.players[userId] == nil {
-		giwon.players[userId] = &Player{
-			id:     userId,
-			status: PlayerIdle,
-			gameId: "",
-		}
+	user, err := GetUser(userId)
+	if err != nil {
+		hub.Write(userId, "ERR no user found")
+		return
 	}
 
 	var ty string
 	fmt.Sscanf(payload, "%s", &ty)
 	switch ty {
 	case "STAT":
-		hub.Write(userId, giwon.players[userId].stateMessage())
+		hub.Write(userId, UserStateMessage(&user))
 	case "GST":
 		var gameId string
 
@@ -138,16 +85,22 @@ func CommandHandler(hub *Hub, userId string, payload string) {
 			return
 		}
 
-		game := giwon.games[gameId]
-		if game == nil {
+		game, err := GetGame(gameId)
+		if err != nil {
 			hub.Write(userId, "ERR game not found")
-		} else {
-			hub.Write(userId, game.stateMessage())
+			return
 		}
+		stones, err := GetStones(gameId)
+		if err != nil {
+			hub.Write(userId, "ERR cannot get stones")
+			return
+		}
+
+		hub.Write(userId, GameStateMessage(&game, stones))
 	case "ENQ":
-		EnqueUser(hub, userId)
+		EnqueUser(hub, user)
 	case "DEQ":
-		DequeUser(hub, userId)
+		DequeUser(hub, user)
 	case "PLC":
 		var x, y int
 		_, err := fmt.Sscanf(payload, "PLC %d %d", &x, &y)
@@ -155,64 +108,77 @@ func CommandHandler(hub *Hub, userId string, payload string) {
 			hub.Write(userId, "ERR wrong command format")
 			return
 		}
-		PlaceStone(hub, userId, x, y)
+		PlaceStone(hub, user, x, y)
 	default:
 		hub.Write(userId, "ERR unknown command")
 	}
 }
 
-func EnqueUser(hub *Hub, userId string) {
-	player := giwon.players[userId]
-	if player.status != PlayerIdle {
-		hub.Write(userId, "ERR player is not idle")
+func EnqueUser(hub *Hub, user User) {
+	if user.Status != UserIdle {
+		hub.Write(user.Id, "ERR user is not idle")
 		return
 	}
 
-	player.status = PlayerQueue
-	hub.Write(userId, "ENQ")
-}
-
-func DequeUser(hub *Hub, userId string) {
-	player := giwon.players[userId]
-	if player.status != PlayerQueue {
-		hub.Write(userId, "ERR player is not in queue")
-		return
-	}
-
-	player.status = PlayerIdle
-	hub.Write(userId, "DEQ")
-}
-
-func PlaceStone(hub *Hub, userId string, x int, y int) {
-	player := giwon.players[userId]
-	if player.status != PlayerPlaying {
-		hub.Write(userId, "ERR player is not playing")
-		return
-	}
-
-	game := giwon.games[player.gameId]
-	if game == nil || game.status != GamePlaying {
-		hub.Write(userId, "ERR game is not playing")
-		return
-	}
-
-	var playerIdx = 0
-	if game.playerId1 == userId {
-		playerIdx = 0
-	} else if game.playerId2 == userId {
-		playerIdx = 1
+	err := SetUserStatus(user.Id, UserQueue)
+	if err != nil {
+		hub.Write(user.Id, "ERR user status cannot update")
 	} else {
-		hub.Write(userId, "ERR player not in game")
+		hub.Write(user.Id, "ENQ")
+	}
+}
+
+func DequeUser(hub *Hub, user User) {
+	if user.Status != UserQueue {
+		hub.Write(user.Id, "ERR user is not in queue")
 		return
 	}
 
-	if len(game.stones)%2 == playerIdx && game.canPlace(playerIdx, x, y) {
-		game.stones = append(game.stones, Stone{x, y})
-		hub.Write(game.playerId1, game.stateMessage())
-		hub.Write(game.playerId2, game.stateMessage())
+	SetUserStatus(user.Id, UserIdle)
+	hub.Write(user.Id, "DEQ")
+}
+
+func PlaceStone(hub *Hub, user User, x int, y int) {
+	if user.Status != UserPlaying {
+		hub.Write(user.Id, "ERR player is not playing")
+		return
+	}
+
+	game, err := GetGame(user.GameId)
+	if err != nil || game.Status != GamePlaying {
+		hub.Write(user.Id, "ERR game is not playing")
+		return
+	}
+
+	var userIdx = 0
+	if game.UserId1 == user.Id {
+		userIdx = 0
+	} else if game.UserId2 == user.Id {
+		userIdx = 1
+	} else {
+		hub.Write(user.Id, "ERR user not in game")
+		return
+	}
+
+	stones, err := GetStones(game.Id)
+	if err != nil {
+		hub.Write(user.Id, "ERR cannot get stones")
+	}
+	if len(stones)%2 == userIdx && CanPlace(stones, userIdx, x, y) {
+		AppendStones(game.Id, Stone{x, y})
+		hub.Write(game.UserId1, GameStateMessage(&game, stones))
+		hub.Write(game.UserId2, GameStateMessage(&game, stones))
 
 		// TODO: check if player won
+		didEnd, _ := CheckGameEnd(stones)
+		if didEnd {
+		}
 	} else {
-		hub.Write(userId, "ERR cannot place")
+		hub.Write(user.Id, "ERR cannot place")
 	}
+}
+
+// TODO: implement
+func CanPlace(stones []Stone, userIdx int, x int, y int) bool {
+	return true
 }

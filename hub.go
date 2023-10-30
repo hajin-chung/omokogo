@@ -88,13 +88,13 @@ func (h *Hub) Run() {
 		case "ECH":
 			h.Write(c.userId, c.payload)
 		case "CONN":
-			h.Write(c.userId, h.StatMessage(c.userId))
+			h.Write(c.userId, h.ConnMessage(c.userId))
 		default:
 			CommandHandler(h, c.userId, c.payload)
 		}
 	}
 }
 
-func (h *Hub) StatMessage(userId string) string {
+func (h *Hub) ConnMessage(userId string) string {
 	return fmt.Sprintf("id: %s, connections: %d", userId, len(h.clients[userId]))
 }
