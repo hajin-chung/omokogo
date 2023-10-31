@@ -20,12 +20,12 @@ const (
 )
 
 type User struct {
-	Id     string
-	Name   string
-	Email  string
-	Score  int
-	Status Status
-	GameId string
+	Id     string `db:"id"`
+	Name   string `db:"name"`
+	Email  string `db:"email"`
+	Score  int    `db:"score"`
+	Status Status `db:"status"`
+	GameId string `db:"gameId"`
 }
 
 const (
@@ -34,14 +34,13 @@ const (
 )
 
 type Game struct {
-	Id string
-	UserId1 string
-	UserId2 string
-	Status Status
+	Id      string `db:"id"`
+	UserId1 string `db:"userId1"`
+	UserId2 string `db:"userId2"`
+	Status  Status `db:"status"`
 }
 
 type Stone struct {
 	X int
 	Y int
 }
-

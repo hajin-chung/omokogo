@@ -28,6 +28,7 @@ func main() {
 		panic(err)
 	}
 	hub := InitHub()
+	InitGomoku(hub)
 
 	engine := html.New("./views", ".tmpl")
 	app := fiber.New(fiber.Config{

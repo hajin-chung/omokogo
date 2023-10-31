@@ -43,6 +43,9 @@ func (h *Hub) Add(userId string, conn *websocket.Conn) error {
 
 	conn.SetCloseHandler(func(code int, text string) error {
 		delete(h.clients[userId], conn)
+		if len(h.clients[userId]) == 0 {
+			SetUserStatus(userId, UserDisconnected)
+		}
 		return nil
 	})
 

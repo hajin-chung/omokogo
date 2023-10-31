@@ -2,7 +2,13 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"time"
 )
+
+func InitGomoku(hub *Hub) {
+	go MatchMaker(hub)
+}
 
 func UserStateMessage(u *User) string {
 	return fmt.Sprintf("STAT %s %d %s", u.Id, u.Status, u.GameId)
@@ -22,53 +28,81 @@ func GameStateMessage(g *Game, stones []Stone) string {
 	return message
 }
 
-// TODO: implement exponential matcher
-func matchMaker(hub *Hub) {
-	// ticker := time.NewTicker(10 * time.Second)
-	// go func() {
-	// 	for {
-	// 		<-ticker.C
-	//
-	// 		var queue []string
-	// 		for playerId, player := range g.players {
-	// 			if player.status == PlayerQueue {
-	// 				queue = append(queue, playerId)
-	// 			}
-	// 		}
-	//
-	// 		for len(queue) >= 2 {
-	// 			playerId1 := queue[0]
-	// 			playerId2 := queue[1]
-	//
-	// 			// create game
-	// 			gameId := CreateId()
-	// 			g.games[gameId] = &Game{
-	// 				id:        gameId,
-	// 				playerId1: playerId1,
-	// 				playerId2: playerId2,
-	// 				status:    GamePlaying,
-	// 			}
-	// 			g.players[playerId1].status = PlayerPlaying
-	// 			g.players[playerId1].gameId = gameId
-	// 			g.players[playerId2].status = PlayerPlaying
-	// 			g.players[playerId2].gameId = gameId
-	//
-	// 			stateMessage := g.games[gameId].stateMessage()
-	// 			hub.Write(playerId1, stateMessage)
-	// 			hub.Write(playerId2, stateMessage)
-	//
-	// 			queue = queue[2:]
-	// 		}
-	// 	}
-	// }()
+func MatchMaker(hub *Hub) {
+	ticker := time.NewTicker(10 * time.Second)
+	go func() {
+		for {
+			<-ticker.C
+
+			queue, err := GetUserInQueue()
+			if err != nil {
+				log.Printf("ERR cannot get users in queue %s\n", err.Error())
+				continue
+			}
+
+			var sortedQueue []string
+			for _, user := range queue {
+				// TODO: consider scores
+				sortedQueue = append(sortedQueue, user.Id)
+			}
+
+			for len(sortedQueue) >= 2 {
+				userId1 := sortedQueue[0]
+				userId2 := sortedQueue[1]
+				log.Printf("Match made %s %s\n", userId1, userId2)
+
+				// create game
+				game, err := CreateGame(userId1, userId2)
+				if err != nil {
+					log.Printf("ERR cannot create game %s", err.Error())
+					break
+				}
+				err = SetUserGameId(userId1, game.Id)
+				if err != nil {
+					log.Printf("ERR cannot set user gameId %s", err.Error())
+					break
+				}
+				err = SetUserGameId(userId2, game.Id)
+				if err != nil {
+					log.Printf("ERR cannot set user gameId %s", err.Error())
+					break
+				}
+				err = SetUserStatus(userId1, UserPlaying)
+				if err != nil {
+					log.Printf("ERR cannot set user status %s", err.Error())
+					break
+				}
+				err = SetUserStatus(userId2, UserPlaying)
+				if err != nil {
+					log.Printf("ERR cannot set user status %s", err.Error())
+					break
+				}
+
+				stateMessage := GameStateMessage(&game, []Stone{})
+				hub.Write(userId1, stateMessage)
+				hub.Write(userId2, stateMessage)
+
+				sortedQueue = sortedQueue[2:]
+			}
+		}
+	}()
 }
 
-// handle gomoku commands
 func CommandHandler(hub *Hub, userId string, payload string) {
 	user, err := GetUser(userId)
 	if err != nil {
+		log.Printf("ERR no user %s found %s", userId, err.Error())
 		hub.Write(userId, "ERR no user found")
 		return
+	}
+
+	// try to set user stauts to idle if commands come in
+	if user.Status == UserDisconnected {
+		err = SetUserStatus(user.Id, UserIdle)
+		if err != nil {
+			log.Printf("ERR cannot change user status %s", err.Error())
+			hub.Write(userId, "ERR cannot change user status")
+		}
 	}
 
 	var ty string
@@ -87,11 +121,13 @@ func CommandHandler(hub *Hub, userId string, payload string) {
 
 		game, err := GetGame(gameId)
 		if err != nil {
-			hub.Write(userId, "ERR game not found")
+			log.Printf("ERR cannot get game %s %s", gameId, err.Error())
+			hub.Write(userId, "ERR cannot get game")
 			return
 		}
 		stones, err := GetStones(gameId)
 		if err != nil {
+			log.Printf("ERR cannot get stones %s %s", gameId, err.Error())
 			hub.Write(userId, "ERR cannot get stones")
 			return
 		}
@@ -160,12 +196,18 @@ func PlaceStone(hub *Hub, user User, x int, y int) {
 		return
 	}
 
+	newStone := Stone {
+		X: x,
+		Y: y,
+	}
+
 	stones, err := GetStones(game.Id)
 	if err != nil {
 		hub.Write(user.Id, "ERR cannot get stones")
 	}
-	if len(stones)%2 == userIdx && CanPlace(stones, userIdx, x, y) {
-		AppendStones(game.Id, Stone{x, y})
+	if len(stones)%2 == userIdx && CanPlace(stones, userIdx, newStone) {
+		AppendStones(game.Id, newStone)
+		stones = append(stones, newStone)
 		hub.Write(game.UserId1, GameStateMessage(&game, stones))
 		hub.Write(game.UserId2, GameStateMessage(&game, stones))
 
@@ -179,6 +221,6 @@ func PlaceStone(hub *Hub, user User, x int, y int) {
 }
 
 // TODO: implement
-func CanPlace(stones []Stone, userIdx int, x int, y int) bool {
+func CanPlace(stones []Stone, userIdx int, newStone Stone) bool {
 	return true
 }
