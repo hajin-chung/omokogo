@@ -34,10 +34,11 @@ const (
 )
 
 type Game struct {
-	Id      string `db:"id"`
-	UserId1 string `db:"userId1"`
-	UserId2 string `db:"userId2"`
-	Status  Status `db:"status"`
+	Id        string `db:"id"`
+	WinnerIdx int    `db:"winnerIdx"`
+	UserId1   string `db:"userId1"`
+	UserId2   string `db:"userId2"`
+	Status    Status `db:"status"`
 }
 
 type Stone struct {
